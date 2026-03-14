@@ -23,7 +23,15 @@ An async Python SDK for the [ServiceBridge](https://cloud.servicebridge.com) fie
 ## Installation
 
 ```bash
-pip install -e .
+pip install sbSDK
+```
+
+For development (editable install from source):
+
+```bash
+git clone https://github.com/wilkcom/sbSDK.git
+cd sbSDK
+pip install -e ".[dev]"
 ```
 
 ### Dependencies
