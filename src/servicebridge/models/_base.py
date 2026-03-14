@@ -1,10 +1,75 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Any, Generic, Iterator, TypeVar
 
 from pydantic import BaseModel, ConfigDict
+from pydantic_core import core_schema
 
 T = TypeVar("T")
+
+
+class CustomFieldMap:
+    """Attribute-style access for ServiceBridge custom fields.
+
+    The API returns custom fields as a list of dicts:
+        [{"Name": "Old Meter No", "Value": "12345"}, ...]
+
+    This class converts that to attribute access by stripping spaces from names:
+        customer.CustomFields.OldMeterNo  → "12345"
+        customer.CustomFields.get("OldMeterNo", "default")
+        customer.CustomFields["OldMeterNo"]
+        list(customer.CustomFields)  → raw list of dicts
+    """
+
+    def __init__(self, fields: list[dict[str, Any]]) -> None:
+        self._raw: list[dict[str, Any]] = fields
+        self._lookup: dict[str, str | None] = {
+            f["Name"].replace(" ", ""): f.get("Value")
+            for f in fields
+            if "Name" in f
+        }
+
+    def __getattr__(self, name: str) -> str | None:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        try:
+            return self._lookup[name]
+        except KeyError:
+            raise AttributeError(f"No custom field '{name}'") from None
+
+    def __getitem__(self, key: str) -> str | None:
+        return self._lookup[key]
+
+    def get(self, name: str, default: str | None = None) -> str | None:
+        return self._lookup.get(name, default)
+
+    def __iter__(self) -> Iterator[dict[str, Any]]:
+        return iter(self._raw)
+
+    def __repr__(self) -> str:
+        return f"CustomFieldMap({self._lookup})"
+
+    # --- Pydantic v2 integration ---
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: Any
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_plain_validator_function(
+            cls._validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda v: v._raw,
+                info_arg=False,
+            ),
+        )
+
+    @classmethod
+    def _validate(cls, v: Any) -> "CustomFieldMap":
+        if isinstance(v, cls):
+            return v
+        if isinstance(v, list):
+            return cls(v)
+        raise ValueError(f"Expected list of custom fields, got {type(v)}")
 
 
 class SBBaseModel(BaseModel):

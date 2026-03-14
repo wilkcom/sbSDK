@@ -1,4 +1,4 @@
-from ._base import SBBaseModel
+from ._base import CustomFieldMap, SBBaseModel
 
 
 class Customer(SBBaseModel):
@@ -15,7 +15,7 @@ class Customer(SBBaseModel):
     ExternalSystemId: str | None = None
     CreatedDate: str | None = None
     ModifiedDate: str | None = None
-    CustomFields: list[dict] | None = None
+    CustomFields: CustomFieldMap | None = None
 
 
 class CustomerCreate(SBBaseModel):

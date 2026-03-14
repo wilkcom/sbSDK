@@ -1,4 +1,4 @@
-from ._base import SBBaseModel
+from ._base import CustomFieldMap, SBBaseModel
 
 
 class InventoryItem(SBBaseModel):
@@ -15,7 +15,7 @@ class InventoryItem(SBBaseModel):
     ExternalSystemId: str | None = None
     CreatedDate: str | None = None
     ModifiedDate: str | None = None
-    CustomFields: list[dict] | None = None
+    CustomFields: CustomFieldMap | None = None
 
 
 class InventoryProductCreate(SBBaseModel):

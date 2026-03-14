@@ -1,4 +1,4 @@
-from ._base import ApiListResponse, ApiPagedListResponse, ApiResponse, SBBaseModel
+from ._base import ApiListResponse, ApiPagedListResponse, ApiResponse, CustomFieldMap, SBBaseModel
 from .accounting import AccountingAccount
 from .activity_note import ActivityNote, ActivityNoteCreate, ActivityNoteUpdate
 from .assets import Asset
