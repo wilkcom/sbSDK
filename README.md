@@ -10,6 +10,7 @@ An async Python SDK for the [ServiceBridge](https://cloud.servicebridge.com) fie
 - **Rate limiting** — built-in token bucket enforcing 50 req/s and 60,000 req/hr
 - **Token management** — session token cached for 24 hours, auto-refreshed on expiry
 - **31 resource clients** — full coverage of the ServiceBridge v4.5 API
+- **Custom fields** — attribute-style access (`customer.CustomFields.OldMeterNo`)
 
 ---
 
@@ -118,6 +119,34 @@ print(result.Data.FirstName)
 
 ---
 
+## Custom Fields
+
+Several resources (Customers, Employees, Inventory) return a `CustomFields` list from the API. The SDK wraps this in a `CustomFieldMap` that provides attribute-style access by stripping spaces from field names:
+
+```python
+# API returns: [{"Name": "Old Meter No", "Value": "12345"}, {"Name": "Paid", "Value": "False"}]
+
+customer = await client.customers.get(customer_id=123, include_custom_fields=True)
+
+# Attribute access — spaces removed from name
+print(customer.Data.CustomFields.OldMeterNo)   # "12345"
+print(customer.Data.CustomFields.Paid)          # "False"
+
+# Safe access with a default
+val = customer.Data.CustomFields.get("OldMeterNo", "")
+
+# Dict-style access
+val = customer.Data.CustomFields["OldMeterNo"]
+
+# Iterate all raw fields
+for field in customer.Data.CustomFields:
+    print(field["Name"], field["Value"])
+```
+
+The same works for `employee.CustomFields` and `inventory_item.CustomFields`.
+
+---
+
 ## Resource Reference
 
 All resources are accessed as attributes on the client:
@@ -211,7 +240,46 @@ result = await client.work_orders.create(WorkOrderCreate(
 ))
 await client.work_orders.update(456, WorkOrderUpdate(Notes="Updated note"))
 await client.work_orders.delete(work_order_id=456)
+```
 
+The `WorkOrder` model is fully typed and mirrors the complete API v4.5 response, including all nested objects and lists:
+
+```python
+wo = await client.work_orders.get(work_order_id=456)
+d = wo.Data
+
+# Nested object access
+print(d.Customer.Name)                    # "Acme Corp"
+print(d.Customer.Id)                      # 123
+print(d.Branch.Name)                      # "North Branch"
+print(d.JobCategory.Name)                 # "HVAC"
+print(d.SalesRepresentative.Name)         # "John Smith"
+print(d.Contact.Email)                    # "contact@example.com"
+print(d.GeoCoordinates.Latitude)          # 41.8781
+
+# Custom fields
+print(d.CustomFields.MyCustomField)       # attribute access
+
+# Line items
+for line in d.WorkOrderLines:
+    print(line.Inventory.Name, line.Price, line.Quantity)
+
+# Visits and team
+for visit in d.Visits:
+    print(visit.Date, visit.Team.Name)
+    for member in visit.TeamMembers:
+        print(member.FirstName, member.LastName)
+
+# Attached documents
+for doc in d.Documents:
+    print(doc.Name, doc.Url)
+
+# Metadata
+print(d.Metadata.CreatedOn)
+print(d.Metadata.CreatedBy)
+```
+
+```python
 # Photos sub-resource
 photos = await client.work_orders.photos(work_order_id=456).list()
 
@@ -655,7 +723,7 @@ src/servicebridge/
 ├── _rate_limiter.py     # Token-bucket rate limiter
 ├── exceptions.py        # Exception hierarchy
 ├── models/              # Pydantic response/request models
-│   ├── _base.py         # ApiResponse[T], ApiListResponse[T], ApiPagedListResponse[T]
+│   ├── _base.py         # ApiResponse[T], ApiListResponse[T], ApiPagedListResponse[T], CustomFieldMap
 │   └── *.py             # One model file per resource
 └── resources/           # Resource clients
     ├── _base.py         # BaseResource with shared HTTP helpers
