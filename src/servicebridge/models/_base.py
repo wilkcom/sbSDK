@@ -9,33 +9,24 @@ T = TypeVar("T")
 
 
 class CustomFieldMap:
-    """Attribute-style access for ServiceBridge custom fields.
+    """Access for ServiceBridge custom fields.
 
     The API returns custom fields as a list of dicts:
         [{"Name": "Old Meter No", "Value": "12345"}, ...]
 
-    This class converts that to attribute access by stripping spaces from names:
-        customer.CustomFields.OldMeterNo  → "12345"
-        customer.CustomFields.get("OldMeterNo", "default")
-        customer.CustomFields["OldMeterNo"]
+    This class provides access to custom fields:
+        customer.CustomFields.get("Old Meter No", "default")
+        customer.CustomFields["Old Meter No"]
         list(customer.CustomFields)  → raw list of dicts
     """
 
     def __init__(self, fields: list[dict[str, Any]]) -> None:
         self._raw: list[dict[str, Any]] = fields
         self._lookup: dict[str, str | None] = {
-            f["Name"].replace(" ", ""): f.get("Value")
+            f["Name"]: f.get("Value")
             for f in fields
             if "Name" in f
         }
-
-    def __getattr__(self, name: str) -> str | None:
-        if name.startswith("_"):
-            raise AttributeError(name)
-        try:
-            return self._lookup[name]
-        except KeyError:
-            raise AttributeError(f"No custom field '{name}'") from None
 
     def __getitem__(self, key: str) -> str | None:
         return self._lookup[key]

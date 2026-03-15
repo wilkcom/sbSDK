@@ -10,7 +10,7 @@ An async Python SDK for the [ServiceBridge](https://cloud.servicebridge.com) fie
 - **Rate limiting** — built-in token bucket enforcing 50 req/s and 60,000 req/hr
 - **Token management** — session token cached for 24 hours, auto-refreshed on expiry
 - **31 resource clients** — full coverage of the ServiceBridge v4.5 API
-- **Custom fields** — attribute-style access (`customer.CustomFields.OldMeterNo`)
+- **Custom fields** — access via get() and indexing (`customer.CustomFields.get("Old Meter No")`)
 
 ---
 
