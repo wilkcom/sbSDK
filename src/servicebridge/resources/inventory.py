@@ -126,9 +126,8 @@ class InventoryResource(BaseResource):
         return ApiPagedListResponse[InventoryItem].model_validate(raw)
 
     async def batch_get(self, ids: list[int], *, include_custom_fields: bool = False) -> dict[int, InventoryItem]:  # type: ignore[override]
-        import asyncio
         unique_ids = list(dict.fromkeys(ids))
-        results = await asyncio.gather(*[self.get(i, include_custom_fields=include_custom_fields) for i in unique_ids])
+        results = await self._batch_gather([self.get(i, include_custom_fields=include_custom_fields) for i in unique_ids])
         return {uid: resp.Data for uid, resp in zip(unique_ids, results) if resp.Data is not None}
 
     async def get(self, inventory_id: int, *, include_custom_fields: bool = False) -> ApiResponse[InventoryItem]:

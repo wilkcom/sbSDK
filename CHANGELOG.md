@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ---
 
+## [0.1.8] — 2026-03-15
+
+### Fixed
+- `batch_get` now caps concurrent in-flight requests at 30 (down from unlimited) via `asyncio.Semaphore`. Prevents 429 rate-limit errors when fetching large batches. The limit is defined as `BaseResource.BATCH_CONCURRENCY = 30` and applies to all resources.
+
+---
+
 ## [0.1.7] — 2026-03-15
 
 ### Fixed
