@@ -15,6 +15,7 @@ Usage:
 """
 
 from ._client import APIClient
+from ._enrich import Enriched
 from .exceptions import (
     APIError,
     AuthenticationError,
@@ -130,6 +131,7 @@ class ServiceBridgeClient:
 
 __all__ = [
     "ServiceBridgeClient",
+    "Enriched",
     "ServiceBridgeError",
     "APIError",
     "AuthenticationError",

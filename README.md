@@ -599,6 +599,85 @@ report = await client.reports.get(reportType="Revenue", dateFrom="2025-01-01")
 
 ---
 
+## Chaining Requests
+
+The ServiceBridge API has no server-side join. To enrich a list of work orders with full customer data, use `batch_get` (available on every resource) and the `Enriched` wrapper.
+
+### `batch_get` — fetch many records concurrently
+
+`batch_get(ids)` deduplicates the ID list, fires all requests in parallel using `asyncio.gather`, and returns `dict[id, model]`. The built-in rate limiter automatically throttles to 50 req/s — no extra setup needed.
+
+```python
+customer_ids = [wo.Customer.Id for wo in wos.Data if wo.Customer]
+customers = await client.customers.batch_get(customer_ids)
+# {123: Customer(...), 456: Customer(...), ...}
+```
+
+### `Enriched` — overlay full models onto results
+
+`Enriched(base, Field=full_model)` wraps any SDK model. Named keyword arguments override the corresponding field; everything else falls through to the underlying model.
+
+```python
+from servicebridge import ServiceBridgeClient, Enriched
+
+async with ServiceBridgeClient() as client:
+    wos = await client.work_orders.list(statusFilter="Open")
+
+    # Fetch all unique customers in one parallel call
+    customer_ids = [wo.Customer.Id for wo in wos.Data if wo.Customer]
+    customers = await client.customers.batch_get(customer_ids)
+
+    # Wrap each work order — Customer is now the full model
+    enriched = [
+        Enriched(wo, Customer=customers.get(wo.Customer.Id) if wo.Customer else None)
+        for wo in wos.Data
+    ]
+
+    for wo in enriched:
+        print(wo.WorkOrderNumber)                     # WorkOrder field (falls through)
+        print(wo.Branch.Name)                         # WorkOrder field (falls through)
+        print(wo.Customer.Email)                      # full Customer model
+        print(wo.Customer.CustomFields.get("Paid"))   # customer custom field
+```
+
+### Multiple enrichments in parallel
+
+Use `asyncio.gather` to fetch multiple resources at the same time, then access each via the inventory dict directly:
+
+```python
+import asyncio
+
+customer_ids = [wo.Customer.Id for wo in wos.Data if wo.Customer]
+inventory_ids = list({
+    line.Inventory.Id
+    for wo in wos.Data
+    for line in wo.WorkOrderLines
+    if line.Inventory and line.Inventory.Id
+})
+
+# Both fetched concurrently
+customers, inventory = await asyncio.gather(
+    client.customers.batch_get(customer_ids),
+    client.inventory.batch_get(inventory_ids),
+)
+
+enriched = [
+    Enriched(wo, Customer=customers.get(wo.Customer.Id) if wo.Customer else None)
+    for wo in wos.Data
+]
+
+for wo in enriched:
+    print(wo.Customer.CustomFields.get("Paid"))
+    for line in wo.WorkOrderLines:
+        item = inventory.get(line.Inventory.Id) if line.Inventory else None
+        if item:
+            print(line.Quantity, item.UnitPrice)
+```
+
+`Enriched` and `batch_get` work on any resource pair — not just work orders and customers.
+
+---
+
 ## Filtering and Query Parameters
 
 All `list()` methods accept keyword arguments that are forwarded as query parameters. Use the parameter names from the [ServiceBridge API docs](https://cloud.servicebridge.com/developer/index):
