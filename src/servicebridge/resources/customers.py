@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from ._base import BaseResource
@@ -12,6 +14,12 @@ class CustomersResource(BaseResource):
     async def list(self, **filters: Any) -> ApiPagedListResponse[Customer]:
         raw = await self._list(filters or None)
         return ApiPagedListResponse[Customer].model_validate(raw)
+
+    async def batch_get(self, ids: list[int], *, include_custom_fields: bool = False) -> dict[int, Customer]:  # type: ignore[override]
+        params: dict[str, Any] = {}
+        if include_custom_fields:
+            params["includeCustomFields"] = True
+        return await super().batch_get(ids, params=params or None)
 
     async def get(self, customer_id: int, *, include_custom_fields: bool = False) -> ApiResponse[Customer]:
         params: dict[str, Any] = {}

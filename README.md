@@ -121,22 +121,19 @@ print(result.Data.FirstName)
 
 ## Custom Fields
 
-Several resources (Customers, Employees, Inventory) return a `CustomFields` list from the API. The SDK wraps this in a `CustomFieldMap` that provides attribute-style access by stripping spaces from field names:
+Several resources (Customers, Employees, Inventory) return a `CustomFields` list from the API. The SDK wraps this in a `CustomFieldMap` that provides easy access using the **exact field name** as returned by the API:
 
 ```python
 # API returns: [{"Name": "Old Meter No", "Value": "12345"}, {"Name": "Paid", "Value": "False"}]
 
 customer = await client.customers.get(customer_id=123, include_custom_fields=True)
 
-# Attribute access — spaces removed from name
-print(customer.Data.CustomFields.OldMeterNo)   # "12345"
-print(customer.Data.CustomFields.Paid)          # "False"
+# Safe access with a default (recommended)
+val = customer.Data.CustomFields.get("Old Meter No", "")   # "12345"
+val = customer.Data.CustomFields.get("Paid", "False")
 
-# Safe access with a default
-val = customer.Data.CustomFields.get("OldMeterNo", "")
-
-# Dict-style access
-val = customer.Data.CustomFields["OldMeterNo"]
+# Dict-style access (raises KeyError if not found)
+val = customer.Data.CustomFields["Old Meter No"]
 
 # Iterate all raw fields
 for field in customer.Data.CustomFields:
@@ -609,7 +606,12 @@ The ServiceBridge API has no server-side join. To enrich a list of work orders w
 
 ```python
 customer_ids = [wo.Customer.Id for wo in wos.Data if wo.Customer]
+
+# Without custom fields
 customers = await client.customers.batch_get(customer_ids)
+
+# With custom fields (same keyword as .get())
+customers = await client.customers.batch_get(customer_ids, include_custom_fields=True)
 # {123: Customer(...), 456: Customer(...), ...}
 ```
 
@@ -637,7 +639,7 @@ async with ServiceBridgeClient() as client:
         print(wo.WorkOrderNumber)                     # WorkOrder field (falls through)
         print(wo.Branch.Name)                         # WorkOrder field (falls through)
         print(wo.Customer.Email)                      # full Customer model
-        print(wo.Customer.CustomFields.get("Paid"))   # customer custom field
+        print(wo.Customer.CustomFields.get("Paid", "False"))   # customer custom field
 ```
 
 ### Multiple enrichments in parallel
@@ -667,7 +669,7 @@ enriched = [
 ]
 
 for wo in enriched:
-    print(wo.Customer.CustomFields.get("Paid"))
+    print(wo.Customer.CustomFields.get("Paid", "False"))
     for line in wo.WorkOrderLines:
         item = inventory.get(line.Inventory.Id) if line.Inventory else None
         if item:

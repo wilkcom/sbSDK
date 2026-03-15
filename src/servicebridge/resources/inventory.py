@@ -125,6 +125,12 @@ class InventoryResource(BaseResource):
         raw = await self._list(filters or None)
         return ApiPagedListResponse[InventoryItem].model_validate(raw)
 
+    async def batch_get(self, ids: list[int], *, include_custom_fields: bool = False) -> dict[int, InventoryItem]:  # type: ignore[override]
+        params: dict[str, Any] = {}
+        if include_custom_fields:
+            params["includeCustomFields"] = True
+        return await super().batch_get(ids, params=params or None)
+
     async def get(self, inventory_id: int, *, include_custom_fields: bool = False) -> ApiResponse[InventoryItem]:
         params: dict[str, Any] = {}
         if include_custom_fields:

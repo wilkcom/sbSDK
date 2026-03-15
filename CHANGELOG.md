@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 
 ---
 
+## [0.1.5] — 2026-03-15
+
+### Changed
+- `CustomersResource.batch_get`, `EmployeesResource.batch_get`, `InventoryResource.batch_get` now accept `include_custom_fields=True` — matching the same keyword argument as their `.get()` methods. No more passing a raw `params` dict for this common case.
+- `CustomFieldMap` uses exact API field names as keys (no space stripping). Access fields with their original name: `CustomFields.get("Old Meter No")`.
+- `CustomFieldMap` removed `__getattr__` — access is via `.get("Name")` or `["Name"]` only.
+
+### Fixed
+- README examples updated to reflect correct `CustomFieldMap` access syntax and `batch_get` with custom fields.
+
+---
+
 ## [0.1.4] — 2026-03-14
 
 ### Added
