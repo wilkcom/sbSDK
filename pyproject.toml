@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sbSDK"
-version = "0.1.6"
+version = "0.1.7"
 description = "Async Python SDK for the ServiceBridge field service management API v4.5"
 readme = "README.md"
 license = { file = "LICENSE" }

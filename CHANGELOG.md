@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ---
 
+## [0.1.7] — 2026-03-15
+
+### Fixed
+- `batch_get` on `CustomersResource`, `EmployeesResource`, and `InventoryResource` now returns fully typed Pydantic models instead of raw dicts. Previously `ApiResponse[Any]` was used in the base implementation, causing `Data` to come back as a plain dict and breaking `customer.CustomFields`, `customer.Email`, etc. The overrides now call the resource's own typed `get()` method via `asyncio.gather`, so every result is correctly parsed as `Customer`, `Employee`, or `InventoryItem`.
+
+---
+
 ## [0.1.6] — 2026-03-15
 
 ### Fixed
