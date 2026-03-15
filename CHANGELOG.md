@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ---
 
+## [0.1.6] — 2026-03-15
+
+### Fixed
+- `includeCustomFields` query parameter now sent as string `"True"` instead of boolean `True` on `get()` and `batch_get()` for `CustomersResource`, `EmployeesResource`, and `InventoryResource`. The ServiceBridge API requires string values for this parameter.
+
+---
+
 ## [0.1.5] — 2026-03-15
 
 ### Changed

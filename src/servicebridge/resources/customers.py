@@ -18,13 +18,13 @@ class CustomersResource(BaseResource):
     async def batch_get(self, ids: list[int], *, include_custom_fields: bool = False) -> dict[int, Customer]:  # type: ignore[override]
         params: dict[str, Any] = {}
         if include_custom_fields:
-            params["includeCustomFields"] = True
+            params["includeCustomFields"] = "True"
         return await super().batch_get(ids, params=params or None)
 
     async def get(self, customer_id: int, *, include_custom_fields: bool = False) -> ApiResponse[Customer]:
         params: dict[str, Any] = {}
         if include_custom_fields:
-            params["includeCustomFields"] = True
+            params["includeCustomFields"] = "True"
         raw = await self._get(customer_id, params=params or None)
         return ApiResponse[Customer].model_validate(raw)
 

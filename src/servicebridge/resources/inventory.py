@@ -128,13 +128,13 @@ class InventoryResource(BaseResource):
     async def batch_get(self, ids: list[int], *, include_custom_fields: bool = False) -> dict[int, InventoryItem]:  # type: ignore[override]
         params: dict[str, Any] = {}
         if include_custom_fields:
-            params["includeCustomFields"] = True
+            params["includeCustomFields"] = "True"
         return await super().batch_get(ids, params=params or None)
 
     async def get(self, inventory_id: int, *, include_custom_fields: bool = False) -> ApiResponse[InventoryItem]:
         params: dict[str, Any] = {}
         if include_custom_fields:
-            params["includeCustomFields"] = True
+            params["includeCustomFields"] = "True"
         raw = await self._get(inventory_id, params=params or None)
         return ApiResponse[InventoryItem].model_validate(raw)
 
